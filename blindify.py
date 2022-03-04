@@ -1,7 +1,7 @@
 """Anonymizes a directory of files/assignments by creating a mapping of the original name to a random 64-bit value.
 
 Usage:
-    python blindify.py [-a|-d] directory mapping.csv
+    python blindify.py <-a | -d | -h> directory mapping.csv [-e entropy]
 
 Author:
     Joshua Crotts - 03.03.2022
@@ -9,12 +9,13 @@ Author:
 
 from datetime import datetime
 
-import sys
+import argparse
 import os
 import random
 import shutil
+import sys
 
-ENTROPY = 64
+DEFAULT_ENTROPY = 64
 
 def input_prompt(prompt, input_list):
     print(f"{prompt} Enter one of {str(input_list)}.")
@@ -24,7 +25,7 @@ def input_prompt(prompt, input_list):
         ans = input()
     return ans
 
-def anonymize(dir, outfile):
+def anonymize(dir, outfile, entropy):
     # If an anonymized mapping already exists, don't overwrite it unless the user says to.
     exists = False
     if os.path.exists(outfile):
@@ -39,13 +40,13 @@ def anonymize(dir, outfile):
         filename = f"{os.path.splitext(outfile)[0]}-copy-{timenow}.csv"
         print(f"Creating a copy of current output csv: {filename}")
         shutil.copy(outfile, filename)
-        print("Copying done!")
+        print("Copying complete!")
 
     # Create the mapping and rename the files/directories. Fix the directory if it ends with /.
     dir = dir.rstrip("/")
     mapping = {}
     for f in os.listdir(dir):
-        id = random.getrandbits(ENTROPY)
+        id = random.getrandbits(entropy)
         mapping.update({id:f})
         try:
             os.rename(f"{dir}/{f}", f"{dir}/{str(id)}")
@@ -79,7 +80,7 @@ def deanonymize(dir, infile):
     for key in mapping:
         for f in os.listdir(dir):
             try:
-                os.rename(f"{dir}{key}", f"{dir}{mapping[key]}")
+                os.rename(f"{dir}/{key}", f"{dir}/{mapping[key]}")
                 break
             except:
                 print(f"FileNotFoundError: Could not find file {dir}/{key}")
@@ -89,20 +90,21 @@ def deanonymize(dir, infile):
     ans = input_prompt("De-anonymizing complete! Do you want to remove the anonymized mapping (.csv) file?", ["y", "n"])
     if ans == "y":
         os.remove(infile)
+        print(f"Successfully Removed {infile}.")
 
-def main():
-    # First check the number of arguments.
-    num_args = len(sys.argv)
-    if sys.argv[1] == '-h':
-        print("blindify: Grade Assignments Anonymously! Usage: python blindify.py [-a|-d] directory map.csv")
-    elif num_args != 4:
-        print(f"InputError: Expected 4 arguments but got {num_args}. Usage: python blindify.py [-a|-d] directory map.csv")
-    elif not os.path.isdir(sys.argv[2]):
-        print(f"InputError: Expected argument 3 to be a directory")
+def create_arg_parser():
+    parser = argparse.ArgumentParser(description='blindify: Grade Assignments Anonymously!')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-a", action="store_true", dest="amode")
+    group.add_argument("-d", action="store_true", dest="dmode")
+    parser.add_argument("-i", action='store', metavar="Input File/Directory", type=str, nargs=1, dest="input_dir", required=True)
+    parser.add_argument("-m", action='store', metavar="CSV Map", type=str, nargs=1, dest="csv_map", required=True)
+    parser.add_argument("-e", action='store', metavar="Entropy in # of Bits", type=int, nargs=1, dest="entropy", default=DEFAULT_ENTROPY, required=False)
+    return parser
 
-    elif sys.argv[1] == '-a':
-        anonymize(sys.argv[2], sys.argv[3])
-    elif sys.argv[1] == '-d':
-        deanonymize(sys.argv[2], sys.argv[3])
-
-main()
+if __name__ == "__main__":
+    args = create_arg_parser().parse_args()
+    if args.amode:
+        anonymize(args.input_dir[0], args.csv_map[0], args.entropy)
+    elif args.dmode:
+        deanonymize(args.input_dir[0], args.csv_map[0])
