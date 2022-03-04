@@ -1,7 +1,7 @@
 """Anonymizes a directory of files/assignments by creating a mapping of the original name to a random 64-bit value.
 
 Usage:
-    python anonymizer.py [-a|-d] directory mapping.csv
+    python blindify.py [-a|-d] directory mapping.csv
 
 Author:
     Joshua Crotts - 03.03.2022
@@ -94,9 +94,9 @@ def main():
     # First check the number of arguments.
     num_args = len(sys.argv)
     if sys.argv[1] == '-h':
-        print("anonymizer: Grade Assignments Anonymously! Usage: python anonymizer.py [-a|-d] directory map.csv")
+        print("blindify: Grade Assignments Anonymously! Usage: python blindify.py [-a|-d] directory map.csv")
     elif num_args != 4:
-        print(f"InputError: Expected 4 arguments but got {num_args}. Usage: python anonymizer.py [-a|-d] directory map.csv")
+        print(f"InputError: Expected 4 arguments but got {num_args}. Usage: python blindify.py [-a|-d] directory map.csv")
     elif not os.path.isdir(sys.argv[2]):
         print(f"InputError: Expected argument 3 to be a directory")
 
