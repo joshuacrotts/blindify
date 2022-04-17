@@ -4,7 +4,7 @@ Usage:
     python blindify.py <-a | -d | -h> directory mapping.csv [-e entropy]
 
 Author:
-    Joshua Crotts - 03.03.2022
+    Joshua Crotts - 04.17.2022
 """
 
 from datetime import datetime
@@ -75,7 +75,13 @@ def deanonymize(dir, infile):
     except IOError:
         print(f"IOError: Could not find input file {infile}")
         sys.exit(1)
-    
+
+    # Check to make sure that they're de-anonymizing the right folder. Just does a simple length check...
+    if len(os.listdir(dir)) != len(mapping):
+        ans = input_prompt(f"Warning: Input directory {dir} does not appear to match the directory with anonymized files. Do you want to continue?", ["y", "n"])
+        if ans != 'y':
+            sys.exit(0)
+
     # Now de-anonymize the files.
     for key in mapping:
         for f in os.listdir(dir):
